@@ -54,11 +54,12 @@ sub new {
 	return $self;
 }
 
-sub parse_conf
+sub parse_file
 {
 	my $self = shift;
 
-	my $namedconf = shift || '/etc/named.conf';
+	my $namedconf = shift
+		 || die "Missing named.conf argument\n";
 
 	open NAMEDCONF, $namedconf
 		|| die "Can't open '$namedconf': $!\n";
@@ -118,9 +119,6 @@ sub _recurse
 	my $self = shift;
 	my $tree = shift;
 
-	ref( $tree ) eq 'ARRAY'
-		|| die "Rethink!\n";
-
 	foreach my $node ( @{ $tree } ) {
 		if ( ref( $node->[-1] ) eq 'ARRAY' ) {
 
@@ -129,7 +127,8 @@ sub _recurse
 			# opening line, recurse through the contents and
 			# close with the curly brace
 
-			$self->open_block_handler->( $node->[0], @{ $node->[1] } );
+			$self->open_block_handler->( $node->[0],
+						     @{ $node->[1] } );
 			$self->_recurse( $node->[-1] );
 			$self->close_block_handler->();
 		} else {
@@ -151,14 +150,93 @@ __END__
 
 =head1 NAME
 
-BIND::Config::Parser - Parse BIND Config file
+BIND::Config::Parser - Parse BIND Config file.
 
 =head1 SYNOPSIS
 
  use BIND::Config::Parser;
 
+ # Create the parser
  my $parser = new BIND::Config::Parser;
+
+ my $indent = 0;
+
+ # Set up callback handlers
+ $parser->set_open_block_handler( sub {
+         print "\t" x $indent, join( " ", @_ ), " {\n";
+         $indent++;
+ } );
+ $parser->set_close_block_handler( sub {
+         $indent--;
+         print "\t" x $indent, "};\n";
+ } );
+ $parser->set_statement_handler( sub {
+         print "\t" x $indent, join( " ", @_ ), ";\n";
+ } );
+
+ # Parse the file
+ $parser->parse_file( "named.conf" );
 
 =head1 DESCRIPTION
 
-This class does something, what exactly, I don't yet know.
+BIND::Config::Parser provides a lightweight parser to the configuration
+file syntax of BIND v8 and v9 using a C<Parse::RecDescent> grammar.
+
+=head1 CONSTRUCTOR
+
+=over 4
+
+=item new( );
+
+Create a new C<BIND::Config::Parser> object.
+
+=back
+
+=head1 METHODS
+
+=over 4
+
+=item set_open_block_handler( CODE_REF );
+
+Set the code to be called when a configuration block is opened. At least one
+argument will be passed; the name of that block, for example C<options> or
+C<zone>, etc. as well as any additional items up to but not including the
+opening curly brace.
+
+=item set_close_block_handler( CODE_REF );
+
+Set the code to be called when a configuration block is closed. No arguments
+are passed.
+
+=item set_statement_handler( CODE_REF );
+
+Set the code to be called on a single line configuration element. At least one
+argument will be passed; the name of that element, as well as any additional
+items up to but not including the ending semi-colon.
+
+=item parse_file( FILENAME );
+
+Parse FILENAME, triggering the above defined handlers on the relevant sections.
+
+=back
+
+=head1 TODO
+
+Probably the odd one or two things. I'm fairly sure the grammar is correct.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (c) 2005 Matt Dainty.
+
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+=head1 AUTHORS
+
+Matt Dainty E<lt>matt@bodgit-n-scarper.comE<gt>.
+
+=head1 SEE ALSO
+
+L<perl>, L<Parse::RecDescent>.
+
+=cut
