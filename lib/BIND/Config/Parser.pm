@@ -182,6 +182,11 @@ BIND::Config::Parser - Parse BIND Config file.
 BIND::Config::Parser provides a lightweight parser to the configuration
 file syntax of BIND v8 and v9 using a C<Parse::RecDescent> grammar.
 
+It is in a similar vein to C<BIND::Conf_Parser>. However, as it has no
+knowledge of the directives, it doesn't need to be kept updated as new
+directives are added, it simply knows how to carve up a BIND configuration
+file into logical chunks.
+
 =head1 CONSTRUCTOR
 
 =over 4
@@ -237,6 +242,6 @@ Matt Dainty E<lt>matt@bodgit-n-scarper.comE<gt>.
 
 =head1 SEE ALSO
 
-L<perl>, L<Parse::RecDescent>.
+L<perl>, L<Parse::RecDescent>, L<BIND::Conf_Parser>.
 
 =cut
